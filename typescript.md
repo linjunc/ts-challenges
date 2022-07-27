@@ -85,7 +85,9 @@ type result = TupleToObject<typeof tuple> // expected { tesla: 'tesla', 'model 3
 ```
 解答
 ```ts
-
+type TupleToObject<T extends readonly (string | number)[]> {
+  [K in keyof T[number]]: K
+}
 ```
 
 ### 14 · 第一个元素
@@ -101,6 +103,13 @@ type arr2 = [3, 2, 1]
 type head1 = First<arr1> // expected to be 'a'
 type head2 = First<arr2> // expected to be 3
 ```
+解答：
+```ts
+type First<T extends any[]> = T extends [infer F, ...infer Rest] ? F : never
+
+type First<T extends any[]> = T extends [] ? never : T[0]
+```
+
 
 ### 18 · 获取元组长度
 
@@ -116,6 +125,10 @@ type spaceX = ['FALCON 9', 'FALCON HEAVY', 'DRAGON', 'STARSHIP', 'HUMAN SPACEFLI
 type teslaLength = Length<tesla> // expected 4
 type spaceXLength = Length<spaceX> // expected 5
 ```
+解答 
+```ts
+type Length<T extends readonly any[]> = T['length']
+```
 
 ### 43 · Exclude
 
@@ -129,6 +142,10 @@ type spaceXLength = Length<spaceX> // expected 5
 ```ts
 type Result = MyExclude<'a' | 'b' | 'c', 'a'> // 'b' | 'c'
 ```
+解答：通过 判断 T 是不是 U，不是才返回 T
+```ts
+type MyExclude<T, U> = T extends U ? never : T;
+```
 
 ### 189 · Awaited
 
@@ -141,6 +158,14 @@ type ExampleType = Promise<string>
 
 type Result = MyAwaited<ExampleType> // string
 ```
+解答：通过 infer 来自动推断类型，需要注意 Promise 套 Promise 的情况
+```ts
+type MyAwaited<T extends Promise<any>> = T extends Promise<infer R>
+  ? R extends Promise<any>
+    ? MyAwaited<R>
+    : R
+  : never;
+```
 
 ### 268 · If
 
@@ -152,7 +177,10 @@ type Result = MyAwaited<ExampleType> // string
 type A = If<true, 'a', 'b'>  // expected to be 'a'
 type B = If<false, 'a', 'b'> // expected to be 'b'
 ```
-
+解答: 简单 if 判断，需要注意类型 boolean 和 true
+```ts
+type If<C extends boolean, T, F> = C extends true ? T : F;
+```
 
 ### 533 · Concat
 
@@ -164,6 +192,10 @@ type B = If<false, 'a', 'b'> // expected to be 'b'
 type Result = Concat<[1], [2]> // expected to be [1, 2]
 ```
 
+解答：
+```ts
+type Concat<T extends Array<any>, U extends Array<any>> = [...T, ...U];
+```
 ### 898 · Includes
 
 在类型系统里实现 JavaScript 的 `Array.includes` 方法，这个类型接受两个参数，返回的类型要么是 `true` 要么是 `false`。
@@ -172,6 +204,14 @@ type Result = Concat<[1], [2]> // expected to be [1, 2]
 
 ```ts
 type isPillarMen = Includes<['Kars', 'Esidisi', 'Wamuu', 'Santana'], 'Dio'> // expected to be `false`
+```
+
+解答：
+```ts
+
+type Includes<T extends readonly any[], U> = T extends [infer F, ...infer R] ? (IsEqual<U, F> extends true ? true : Includes<R, U>) : false
+type IsEqual<A, B> = ((<T>() => T extends A ? true : false) extends (<T>() => T  extends B ? true : false) ? true : false )
+
 ```
 
 
